@@ -1,4 +1,4 @@
-## README Draft 📄  
+## README 📄  
 
 This Nextflow script is based on the workflow from [`namzoo99/aa_bp_seq_seek`](https://github.com/namzoo99/aa_bp_seq_seek) and has been updated to support **tm-nm pair mode**.
 

@@ -1,5 +1,7 @@
 #!/bin/bash
-
+# =================
+# Before running this script, you should build singularity image && download .bed files 
+# =================
 START_TIME=$SECONDS
 
 # =================

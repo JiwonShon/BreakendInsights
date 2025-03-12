@@ -1,0 +1,52 @@
+Bootstrap: docker
+From: ubuntu:20.04
+
+%post
+    # 패키지 업데이트 및 필수 패키지 설치
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update && apt-get install -y \
+        libssl-dev \
+        libcurl4-openssl-dev \
+        libxml2-dev \
+        zlib1g-dev \
+        build-essential \
+        cmake \
+        make \
+        wget \
+        libomp-dev \
+        git \
+        openjdk-11-jre-headless \
+        curl \
+        gnupg \
+        samtools \
+        bamtools && \
+        rm -rf /var/lib/apt/lists/*
+
+    # 설치 확인
+    samtools --version
+    bamtools --version
+
+    # HMF Bamtools 설치
+    mkdir -p /opt/hmftools/bamtools
+    export BAMTOOLS_VERSION=1.3
+    cd /opt/hmftools/bamtools && \
+        wget -O bam-tools_v${BAMTOOLS_VERSION}.jar "https://github.com/hartwigmedical/hmftools/releases/download/bam-tools-v${BAMTOOLS_VERSION}/bam-tools_v${BAMTOOLS_VERSION}.jar" && \
+        chmod +x bam-tools_v${BAMTOOLS_VERSION}.jar
+
+%environment
+    export PATH=/opt/hmftools/bamtools:$PATH
+    export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+
+%runscript
+    exec /bin/bash "$@"
+
+%labels
+    Author "Jiwon"
+    Version "1.3"
+    Description "Singularity container for hmftools-bamtools version 1.3 and latest samtools"
+
+%test
+    echo "Testing Singularity container..."
+    samtools --version
+    bamtools --version
+

@@ -1,6 +1,7 @@
 #!/bin/bash
 # =================
-# Before running this script, you should build singularity image && download .bed files 
+# Before running this script, you should download singularity/bamtools_v1.3.dev && run
+# ```singularity build --fakeroot bamtools_v1.3.sif bamtools_v1.3.def```
 # =================
 START_TIME=$SECONDS
 

@@ -2,6 +2,7 @@
 # =================
 # Before running this script, you should download singularity/bamtools_v1.3.dev && run
 # ```singularity build --fakeroot bamtools_v1.3.sif bamtools_v1.3.def```
+# && ``` bash slice_bam_pair_singularity.sh absolute_path_of_bam_file```
 # =================
 START_TIME=$SECONDS
 

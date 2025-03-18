@@ -8,7 +8,7 @@ START_TIME=$SECONDS
 BAM_FILE=$(realpath "$1")
 
 PATIENT_ID=$(basename "$BAM_FILE" | cut -d'-' -f1,2,3)                              
-BED_FILE="./bed/${PATIENT_ID}_ms_BNDregion.bed"                                     
+BED_FILE="./glass_ms_bed/${PATIENT_ID}_ms_BNDregion.bed"                                     
 OBJECT_ID=$(basename "$BAM_FILE" | cut -d'.' -f1)
 
 # =================

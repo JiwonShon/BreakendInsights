@@ -7,16 +7,17 @@ START_TIME=$SECONDS
 # =================
 BAM_FILE=$(realpath "$1")
 
+# =================
+# Automatically generate variables
+# =================
 PATIENT_ID=$(basename "$BAM_FILE" | cut -d'-' -f1,2,3)                              
 BED_FILE="./glass_ms_bed/${PATIENT_ID}_ms_BNDregion.bed"                                     
 OBJECT_ID=$(basename "$BAM_FILE" | cut -d'.' -f1)
+BAM_DIR=$(dirname "$BAM_FILE")
 
-# =================
-# Change the following paths according to your setup
-# =================
 SINGULARITY_IMAGE="./singularity_def/bamtools_v1.3.sif"             
 REFERENCE_FILE="./reference/human_g1k_v37_decoy.fasta"                       
-BIND_PATHS="$(pwd):$(pwd)"                                           
+BIND_PATHS="$(pwd):$(pwd),${BAM_DIR}:${BAM_DIR}"                                           
 
 # =================
 # Check files
@@ -54,9 +55,9 @@ singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
     samtools view -H "$BAM_FILE" > "$WORKDIR/$(basename "$BAM_FILE").header.txt"
 
 # --- Step 2: Generate BAM Index ---
-echo "🔹 Generating BAM index..."
-singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
-    samtools index "$BAM_FILE"
+# echo "🔹 Generating BAM index..."
+# singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
+#     samtools index "$BAM_FILE"
 
 # --- Step 3: Run BAM Slicing ---
 echo "🚀 Running BAM slicing..."

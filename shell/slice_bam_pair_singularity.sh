@@ -1,9 +1,5 @@
 #!/bin/bash
-# =================
-# Before running this script, you should download singularity/bamtools_v1.3.dev && run
-# ```singularity build --fakeroot bamtools_v1.3.sif bamtools_v1.3.def```
-# && ``` bash slice_bam_pair_singularity.sh absolute_path_of_bam_file```
-# =================
+
 START_TIME=$SECONDS
 
 # =================
@@ -18,9 +14,9 @@ OBJECT_ID=$(basename "$BAM_FILE" | cut -d'.' -f1)
 # =================
 # Change the following paths according to your setup
 # =================
-SINGULARITY_IMAGE="/mnt/NAS/storage/singularity_img/bamtools_v1.3.sif"              # Singularity image path
-REFERENCE_FILE="/mnt/NAS/storage/references/GRCh37/human_g1k_v37_decoy.fasta"       # Reference genome path
-BIND_PATHS="$(pwd):$(pwd),/mnt:/mnt"                                                # Define bind paths for Singularity
+SINGULARITY_IMAGE="./singularity_def/bamtools_v1.3.sif"             
+REFERENCE_FILE="./reference/human_g1k_v37_decoy.fasta"                       
+BIND_PATHS="$(pwd):$(pwd)"                                           
 
 # =================
 # Check files
@@ -44,7 +40,7 @@ fi
 echo "✅ Reference genome loaded: $REFERENCE_FILE"
 
 
-WORKDIR="$(pwd)/sliced_BAM/${PATIENT_ID}/${OBJECT_ID}"
+WORKDIR="$(pwd)/results/sliced_BAM/${PATIENT_ID}/${OBJECT_ID}"
 mkdir -p "$WORKDIR"
 echo "📁 Working directory: $WORKDIR"
 
@@ -58,9 +54,9 @@ singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
     samtools view -H "$BAM_FILE" > "$WORKDIR/$(basename "$BAM_FILE").header.txt"
 
 # --- Step 2: Generate BAM Index ---
-# echo "🔹 Generating BAM index..."
-# singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
-    # samtools index "$BAM_FILE"
+echo "🔹 Generating BAM index..."
+singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
+    samtools index "$BAM_FILE"
 
 # --- Step 3: Run BAM Slicing ---
 echo "🚀 Running BAM slicing..."

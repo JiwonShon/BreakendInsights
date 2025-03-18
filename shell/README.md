@@ -10,7 +10,7 @@ This script slices a given BAM file into smaller regions defined in a BED file u
 
 Extracting the ZIP file will create the following directories and files:
 ```
-./bed
+./glass_ms_bed
 ./reference
 ./singularity_def
 slice_bam_pair_singularity.sh

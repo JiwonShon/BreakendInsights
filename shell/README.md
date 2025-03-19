@@ -28,7 +28,7 @@ cd ..
 ```
 
 ### 3. Run the BAM slicing script
-Execute the script with the absolute path of the BAM file:
+Execute the script with **the absolute path of the BAM file**:
 ```
 bash ./slice_bam_pair_singularity.sh /absolute/path/to/BAM_file
 ```

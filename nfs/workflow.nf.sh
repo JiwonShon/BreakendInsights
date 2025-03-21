@@ -30,7 +30,10 @@ include {run_BNDregion_bam_ms_hmf} from './BNDregion_ms/BNDregion_bam_ms.nf.sh'
 //
 // ######################################################################
 include { aa_bp_seq_seek } from './aa_bp_seq_seek/aa_bp_seq_seek.nf.sh' addParams(workflow_name: "aa_bp_seq_seek", aa_workflow:"aaSuite_somatic_ss", aa_gain: 4.5, aa_cnsize_min: 50000, aa_downsample: 10)
-include { aa_bp_seq_seek_pair_sh } from './aa_bp_seq_seek/aa_bp_seq_seek_pair_sh.nf.sh' addParams(workflow_name: "aa_bp_seq_seek_pair_sh", aa_workflow:"aaSuite_somatic_ss", aa_gain: 4.5, aa_cnsize_min: 50000, aa_downsample: 10)
+include { aa_bp_seq_seek_pair_sh } from './aa_bp_seq_seek/aa_bp_seq_seek_pair_sh.nf.sh' addParams(workflow_name: "aa_bp_seq_seek_pair_ss", aa_workflow:"aaSuite_somatic_ss", aa_gain: 4.5, aa_cnsize_min: 50000, aa_downsample: 10)
+
+include { aa_bp_seq_seek_pair_ss } from './aa_bp_seq_seek/aa_bp_seq_seek_pair_sh.nf.sh' addParams(workflow_name: "aa_bp_seq_seek_pair_ss", aa_workflow:"aaSuite_somatic_ss", aa_gain: 4.5, aa_cnsize_min: 50000, aa_downsample: 10)
+include { aa_bp_seq_seek_pair_ms } from './aa_bp_seq_seek/aa_bp_seq_seek_pair_sh.nf.sh' addParams(workflow_name: "aa_bp_seq_seek_pair_ms", aa_workflow:"aaSuite_somatic_ms", aa_gain: 4.5, aa_cnsize_min: 50000, aa_downsample: 10)
 
 // ======================================================================
 // ======================================================================

@@ -1,7 +1,7 @@
 /*
 Updated: 2024-12-12
 Edit: 2025-01-16 by Jiwon 
-Description: This version of aa_bp_seq_seek is for analyzing AA pair mode results from the cloud pipeline, modified to separate and analyze tm and nm in single pair mode.
+Description: This version of aa_bp_seq_seek is for analyzing AA pair mode results from the cloud pipeline, modified to separate and analyze tm and nm in single mode.
 */
 
 /*
@@ -14,7 +14,7 @@ workflow
 =================================================================
 */
 
-workflow aa_bp_seq_seek_pair_sh {
+workflow aa_bp_seq_seek_pair_ss {
 	main:
         println "workflow_name = ${params.workflow_name}"
         println "aa_gain = ${params.aa_gain}"
@@ -48,11 +48,11 @@ workflow aa_bp_seq_seek_pair_sh {
 	        //ch_genome_alt 	= Channel.value(file(params.genome_alt))
         }
 
-    // ==== indexing bam
-    ch_pairs_bam = make_samples_only_bam ( params.dna_legacy_file_sheet )
-   	// OUTPUT: [aliquot, study, project, repository, tm_object_id, tm_bam,         nm_object_id, nm_bam,         bed_path, aa_files ]
+        // ==== indexing bam
+    	ch_pairs_bam = make_samples_only_bam ( params.dna_legacy_file_sheet )
+   		// OUTPUT: [aliquot, study, project, repository, tm_object_id, tm_bam,         nm_object_id, nm_bam,         bed_path, aa_files ]
 		ch_pairs = index_bam(ch_pairs_bam)
-   	// OUTPUT: [aliquot, study, project, repository, tm_object_id, tm_bam, tm_bai, nm_object_id, nm_bam, nm_bai, bed_path, aa_files ]
+   		// OUTPUT: [aliquot, study, project, repository, tm_object_id, tm_bam, tm_bai, nm_object_id, nm_bam, nm_bai, bed_path, aa_files ]
 		
 		ch_input = ch_pairs
 			.map{   aliquot, study, project, repository, tm_object_id, tm_bam, tm_bai, nm_object_id, nm_bam, nm_bai, bed_path, aa_files ->
@@ -61,7 +61,7 @@ workflow aa_bp_seq_seek_pair_sh {
 		//ch_input.view()	
 
 		// ==== aa_bp_ss: process 1
-    count_aa_amp_num(ch_input)
+        count_aa_amp_num(ch_input)
 		//OUTPUT: aliquot, study, project, repository, aa_files, aa_sum_file_path_txt, amp_num_txt, amp_num, cmds
 		//count_aa_amp_num.out.view()
 
@@ -69,7 +69,7 @@ workflow aa_bp_seq_seek_pair_sh {
 		amp = count_aa_amp_num.out.map{ aliquot, study, project, repository, aa_files, aa_sum_file_path_txt, amp_num_txt, amp_num, cmds ->
                  				return[ aliquot, study, project, repository, aa_files,            					      amp_num ] }
 		//amp.view()
-    no_aa_amp(amp)
+        no_aa_amp(amp)
 		// OUTPUT: aliquot, study, project, repository, aa_files, no_amplicon_flag, cmds
 		
 		make_input_for_breakpoints_to_bed(amp, R_ch)
@@ -78,34 +78,34 @@ workflow aa_bp_seq_seek_pair_sh {
 		input_breakpoints_to_bed = make_input_for_breakpoints_to_bed.out
 	      							    .map {  aliquot, study, project, repository, aa_files, amp_num, bpinput_txt, aainterval_txt, env, cmds -> 
 	 							    return[     aliquot, study, project, repository, aa_files,          bpinput_txt, aainterval_txt]}
-    get_aa_bp(input_breakpoints_to_bed)
+        get_aa_bp(input_breakpoints_to_bed)
 		//OUTPUT: aliquot, study, project, repository, aa_files, bp_bed, env, cmds
 
-	  // process 4-1 or 4-2
-    output_breakpoints_to_bed = get_aa_bp.out
-       				      .map{    aliquot, study, project, repository, aa_files, bp_bed_info, env, cmds -> 
-	  	       	      return [ aliquot, study, project, repository,           bp_bed_info ]}
+	    // process 4-1 or 4-2
+        output_breakpoints_to_bed = get_aa_bp.out
+    	       				      .map{    aliquot, study, project, repository, aa_files, bp_bed_info, env, cmds -> 
+	    			       	      return [ aliquot, study, project, repository,           bp_bed_info ]}
 		//output_breakpoints_to_bed.view()
 
 
-    // ==== aa_bp_ss: local assembly SvABA (remove:ch_genome_alt)
+        // ==== aa_bp_ss: local assembly SvABA (remove:ch_genome_alt)
 		run_svaba_ss_targeted_local_assembly_out=run_svaba_ss_targeted_local_assembly(ch_pairs, ch_genome_fasta, ch_genome_index, ch_genome_dict,
      			 		     				ch_genome_sa, ch_genome_bwt, ch_genome_ann, ch_genome_amb, ch_genome_pac,
-         			 	     			ch_svaba_dbsnp_vcf)
+             			 	     			ch_svaba_dbsnp_vcf)
 		//OUTPUT: aliquot, study, project, repository, tm_object_id, nm_object_id, BND_bed, aa_files, svaba_somatic_sv_vcf, svaba_unfiltered_somatic_sv_vcf, svaba_germline_sv_vcf, svaba_unfiltered_germline_sv_vcf, svaba_output, bps_txt, env, cmds
 		//run_svaba_ss_targeted_local_assembly_out.view()
         
-	  // ==== aa_bp_ss: process 6 (preliminary process)
+	    // ==== aa_bp_ss: process 6 (preliminary process)
 
 		input_align_aa_bp_to_svaba = output_breakpoints_to_bed
-     						.combine(run_svaba_ss_targeted_local_assembly_out, by:[0,1,2,3])
+        						.combine(run_svaba_ss_targeted_local_assembly_out, by:[0,1,2,3])
 								.map{    aliquot, study, project, repository, bp_bed_info, tm_object_id, nm_object_id, BND_bed, aa_files, svaba_somatic_sv_vcf, svaba_unfiltered_somatic_sv_vcf, svaba_germline_sv_vcf, svaba_unfiltered_germline_sv_vcf, svaba_output, bps_txt, env, cmds ->
-    		        return [ aliquot, study, project, repository, bp_bed_info, tm_object_id, nm_object_id,          aa_files, svaba_somatic_sv_vcf, svaba_unfiltered_somatic_sv_vcf, svaba_germline_sv_vcf, svaba_unfiltered_germline_sv_vcf ]}
-    //input_align_aa_bp_to_svaba.view()
-    align_aa_bp_to_svaba(input_align_aa_bp_to_svaba, R_ch)
+      		 			        return [ aliquot, study, project, repository, bp_bed_info, tm_object_id, nm_object_id,          aa_files, svaba_somatic_sv_vcf, svaba_unfiltered_somatic_sv_vcf, svaba_germline_sv_vcf, svaba_unfiltered_germline_sv_vcf ]}
+        //input_align_aa_bp_to_svaba.view()
+        align_aa_bp_to_svaba(input_align_aa_bp_to_svaba, R_ch)
 
 
-	  // process 7 ??
+	    // process 7 ??
 		//copy_script(ch_input, R_ch)
 
 
@@ -125,7 +125,127 @@ workflow aa_bp_seq_seek_pair_sh {
 			return [aliquot, study, project, repository, tm_object_id, nm_object_id, somatic_matched_svaba_annotated_aa, svaba_somatic_bedpe, bps_txt]}
 
 		post_aabpss(post_aabpss_input, py_ch)
+		//post_aabpss_ms(post_aabpss_input, py_ch)
+
+
 }
+
+workflow aa_bp_seq_seek_pair_ms {
+	main:
+        println "workflow_name = ${params.workflow_name}"
+        println "aa_gain = ${params.aa_gain}"
+        println "aa_cnsize_min = ${params.aa_cnsize_min}"
+        println "aa_downsample = ${params.aa_downsample}"
+        println "cohort_name = ${params.cohort_name}"
+
+        R_ch = Channel.value(file("${params.nf_home}/R/nextflow"))
+        py_ch = Channel.value(file("${params.nf_home}/python"))
+        
+        ch_svaba_dbsnp_vcf = Channel.value(file(params.svaba_dbsnp_vcf))
+        if (params.cohort_name=="HMF") {
+	        ch_genome_fasta = Channel.value(file(params.hmftools_ref_fasta))
+	        ch_genome_index = Channel.value(file(params.hmftools_ref_fai))
+	        ch_genome_dict 	= Channel.value(file(params.hmftools_ref_dict))
+	        ch_genome_sa 	= Channel.value(file(params.hmftools_ref_sa))
+	        ch_genome_bwt 	= Channel.value(file(params.hmftools_ref_bwt))
+	        ch_genome_ann	= Channel.value(file(params.hmftools_ref_ann))        
+	        ch_genome_amb 	= Channel.value(file(params.hmftools_ref_amb))
+	        ch_genome_pac 	= Channel.value(file(params.hmftools_ref_pac))
+
+        } else{
+	        ch_genome_fasta = Channel.value(file(params.genome_fasta))
+	        ch_genome_index = Channel.value(file(params.genome_index))
+	        ch_genome_dict 	= Channel.value(file(params.genome_dict))
+	        ch_genome_sa 	= Channel.value(file(params.genome_sa))
+	        ch_genome_bwt 	= Channel.value(file(params.genome_bwt))
+	        ch_genome_ann 	= Channel.value(file(params.genome_ann))
+	        ch_genome_amb 	= Channel.value(file(params.genome_amb))
+	        ch_genome_pac 	= Channel.value(file(params.genome_pac))
+	        //ch_genome_alt 	= Channel.value(file(params.genome_alt))
+        }
+
+        // ==== indexing bam
+    	ch_pairs_bam = make_samples_only_bam ( params.dna_legacy_file_sheet )
+   		// OUTPUT: [aliquot, study, project, repository, tm_object_id, tm_bam,         nm_object_id, nm_bam,         bed_path, aa_files ]
+		ch_pairs = index_bam(ch_pairs_bam)
+   		// OUTPUT: [aliquot, study, project, repository, tm_object_id, tm_bam, tm_bai, nm_object_id, nm_bam, nm_bai, bed_path, aa_files ]
+		
+		ch_input = ch_pairs
+			.map{   aliquot, study, project, repository, tm_object_id, tm_bam, tm_bai, nm_object_id, nm_bam, nm_bai, bed_path, aa_files ->
+			return[ aliquot, study, project, repository,                                                                       aa_files]}
+		//OUTPUT: aliquot, study, project, repository, aa_files
+		//ch_input.view()	
+
+		// ==== aa_bp_ss: process 1
+        count_aa_amp_num(ch_input)
+		//OUTPUT: aliquot, study, project, repository, aa_files, aa_sum_file_path_txt, amp_num_txt, amp_num, cmds
+		//count_aa_amp_num.out.view()
+
+		// ==== aa_bp_ss: process 2-1 or 2-2 - check amplicon existance
+		amp = count_aa_amp_num.out.map{ aliquot, study, project, repository, aa_files, aa_sum_file_path_txt, amp_num_txt, amp_num, cmds ->
+                 				return[ aliquot, study, project, repository, aa_files,            					      amp_num ] }
+		//amp.view()
+        no_aa_amp(amp)
+		// OUTPUT: aliquot, study, project, repository, aa_files, no_amplicon_flag, cmds
+		
+		make_input_for_breakpoints_to_bed(amp, R_ch)
+		// OUTPUT: aliquot, study, project, repository, aa_files, amp_num, bpinput_txt, aainterval_txt, env, cmds
+    	
+		input_breakpoints_to_bed = make_input_for_breakpoints_to_bed.out
+	      							    .map {  aliquot, study, project, repository, aa_files, amp_num, bpinput_txt, aainterval_txt, env, cmds -> 
+	 							    return[     aliquot, study, project, repository, aa_files,          bpinput_txt, aainterval_txt]}
+        get_aa_bp(input_breakpoints_to_bed)
+		//OUTPUT: aliquot, study, project, repository, aa_files, bp_bed, env, cmds
+
+	    // process 4-1 or 4-2
+        output_breakpoints_to_bed = get_aa_bp.out
+    	       				      .map{    aliquot, study, project, repository, aa_files, bp_bed_info, env, cmds -> 
+	    			       	      return [ aliquot, study, project, repository,           bp_bed_info ]}
+		//output_breakpoints_to_bed.view()
+
+
+        // ==== aa_bp_ss: local assembly SvABA (remove:ch_genome_alt)
+		run_svaba_ss_targeted_local_assembly_out=run_svaba_ss_targeted_local_assembly(ch_pairs, ch_genome_fasta, ch_genome_index, ch_genome_dict,
+     			 		     				ch_genome_sa, ch_genome_bwt, ch_genome_ann, ch_genome_amb, ch_genome_pac,
+             			 	     			ch_svaba_dbsnp_vcf)
+		//OUTPUT: aliquot, study, project, repository, tm_object_id, nm_object_id, BND_bed, aa_files, svaba_somatic_sv_vcf, svaba_unfiltered_somatic_sv_vcf, svaba_germline_sv_vcf, svaba_unfiltered_germline_sv_vcf, svaba_output, bps_txt, env, cmds
+		//run_svaba_ss_targeted_local_assembly_out.view()
+        
+	    // ==== aa_bp_ss: process 6 (preliminary process)
+
+		input_align_aa_bp_to_svaba = output_breakpoints_to_bed
+        						.combine(run_svaba_ss_targeted_local_assembly_out, by:[0,1,2,3])
+								.map{    aliquot, study, project, repository, bp_bed_info, tm_object_id, nm_object_id, BND_bed, aa_files, svaba_somatic_sv_vcf, svaba_unfiltered_somatic_sv_vcf, svaba_germline_sv_vcf, svaba_unfiltered_germline_sv_vcf, svaba_output, bps_txt, env, cmds ->
+      		 			        return [ aliquot, study, project, repository, bp_bed_info, tm_object_id, nm_object_id,          aa_files, svaba_somatic_sv_vcf, svaba_unfiltered_somatic_sv_vcf, svaba_germline_sv_vcf, svaba_unfiltered_germline_sv_vcf ]}
+        //input_align_aa_bp_to_svaba.view()
+        align_aa_bp_to_svaba(input_align_aa_bp_to_svaba, R_ch)
+
+
+	    // process 7 ??
+		//copy_script(ch_input, R_ch)
+
+
+		// ==== POST_AA_BP_SS: vcf_to_bedpe
+		input_vcf_to_bedpe = run_svaba_ss_targeted_local_assembly_out
+    	       				      .map{    aliquot, study, project, repository, tm_object_id, nm_object_id, BND_bed, aa_files, svaba_somatic_sv_vcf, svaba_unfiltered_somatic_sv_vcf, svaba_germline_sv_vcf, svaba_unfiltered_germline_sv_vcf, svaba_output, bps_txt, env, cmds  -> 
+	    			       	      return [ aliquot, study, project, repository, tm_object_id, nm_object_id,          aa_files, svaba_somatic_sv_vcf, svaba_unfiltered_somatic_sv_vcf, svaba_germline_sv_vcf, svaba_unfiltered_germline_sv_vcf,               bps_txt ]}
+		vcf_to_bedpe(input_vcf_to_bedpe, py_ch)
+		//OUTPUT:tuple val(aliquot_barcode), path("*.svaba.somatic.sv.vcf.bedpe.csv"), path("*{bedpe,log}"), path(bps_txt), path("env.txt"), path("*{command,exitcode}*",hidden:true)
+
+
+		post_aabpss_input = align_aa_bp_to_svaba.out
+			.map{ aliquot, study, project, repository, tm_object_id, nm_object_id, aa_files, svaba_somatic_sv_vcf, svaba_unfiltered_somatic_sv_vcf, somatic_matched_svaba_annotated_aa, germline_matched_svaba_annotated_aa, matched_svaba_aa, matched_unfiltered_svaba_annotated_aa, matched_unfiltered_svaba_aa, env, cmds -> 
+			return [aliquot, study, project, repository, tm_object_id, nm_object_id, somatic_matched_svaba_annotated_aa ]}
+			.combine(vcf_to_bedpe.output.map{aliquot, svaba_somatic_bedpe, files, bps_txt, env, cmds -> return[aliquot, svaba_somatic_bedpe, bps_txt]}, by:[0])
+			.map{   aliquot, study, project, repository, tm_object_id, nm_object_id, somatic_matched_svaba_annotated_aa, svaba_somatic_bedpe, bps_txt -> 
+			return [aliquot, study, project, repository, tm_object_id, nm_object_id, somatic_matched_svaba_annotated_aa, svaba_somatic_bedpe, bps_txt]}
+			
+		post_aabpss_ms(post_aabpss_input, py_ch)
+
+
+}
+
+
 
 
 /*
@@ -260,9 +380,11 @@ process get_aa_bp {
 		aainterval=`cat ${aainterval_txt}`
 
 		python3 /home/breakpoints_to_bed.py \
-		    -i ${bpinput_txt} \
+		-i ${bpinput_txt} \
         -r \$aainterval --add_chr_tag && \
         ls -al -R ./ >> get_aa_bp_env.txt
+		
+
 		"""
 
 }
@@ -290,9 +412,14 @@ process no_aa_bp {
 
 		"""
 		#!/bin/bash
+
 		touch no_aa_bp_flag
+		
+
 		"""
+
 }
+
 
 
 // preliminary step
@@ -312,6 +439,7 @@ process align_aa_bp_to_svaba {
 	output:
 		tuple val(aliquot_barcode), val(study), val(project), val(repository),               val(tm_object_id), val(nm_object_id), path(aa_files), path(svaba_somatic_sv_vcf), path(svaba_unfiltered_somatic_sv_vcf), path("*somatic.sv.vcf_matched_svaba_annotated_aa.tsv"), path("*germline.sv.vcf_matched_svaba_annotated_aa.tsv"), path("*_matched_svaba_aa.tsv"), path("*_matched_unfiltered_svaba_annotated_aa.tsv"), path("*_matched_unfiltered_svaba_aa.tsv"), path("env.txt"), path("*{command,exitcode}*",hidden:true)
 	
+	
 	script:
 
 		"""
@@ -322,21 +450,24 @@ process align_aa_bp_to_svaba {
 		    --aa_output_path ${aa_files} \
 		    --svaba_sv_vcf ${svaba_somatic_sv_vcf} \
 		    --svaba_unfiltered_sv_vcf ${svaba_unfiltered_somatic_sv_vcf} \
-			  --aliquot_barcode ${aliquot_barcode} \
-		   	--output_path ./ && \
+			--aliquot_barcode ${aliquot_barcode} \
+		 	--output_path ./ && \
 
     		Rscript ${R_dir}/matching_aa_svaba_ss.R \
 		    --breakpoints_bed ${bp_bed} \
 		    --aa_output_path ${aa_files} \
 		    --svaba_sv_vcf ${svaba_germline_sv_vcf} \
 		    --svaba_unfiltered_sv_vcf ${svaba_germline_sv_vcf} \
-			  --aliquot_barcode ${aliquot_barcode} \
-		 	  --output_path ./ && \
+			--aliquot_barcode ${aliquot_barcode} \
+		 	--output_path ./ && \
 
 		 	ls -al -R ./ >> env.txt
 
     	"""
+
 }
+
+
 
 
 process copy_script {
@@ -364,6 +495,7 @@ process copy_script {
     		cp ${R_dir}/input_for_svaba.R ./`date +%Y.%m.%d`_input_for_svaba.R && \
     		cp ${R_dir}/matching_aa_svaba.R ./`date +%Y.%m.%d`_matching_aa_svaba.R && \
     		cp ${params.nf_home}/nfs/aa_bp_seq_seek/${params.step}.nf.sh ./`date +%Y.%m.%d`_${params.step}.nf.sh
+
     	"""
 
 }
@@ -372,9 +504,9 @@ process run_svaba_ss_targeted_local_assembly {
 	
 	tag "${aliquot_barcode}"
 
-	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba_ss/2kb/local_assembly", pattern: "*{vcf,txt,bam,gz,log}", mode: 'copy'
-	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba_ss/2kb/local_assembly/bed", pattern: "*{bed}", mode: 'copy'
-	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba_ss/2kb/local_assembly", pattern: "*{command,exitcode}*", mode: 'copy'
+	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba/2kb/local_assembly", pattern: "*{vcf,txt,bam,gz,log}", mode: 'copy'
+	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba/2kb/local_assembly/bed", pattern: "*{bed}", mode: 'copy'
+	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba/2kb/local_assembly", pattern: "*{command,exitcode}*", mode: 'copy'
 	
 	label "svaba"
 
@@ -418,8 +550,8 @@ process vcf_to_bedpe {
     
 	tag "${aliquot_barcode}"
 
-	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba_ss/2kb/local_assembly/bedpe", pattern: "*{bedpe,txt}", mode: 'copy'
-	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba_ss/2kb/local_assembly/bedpe", pattern: "*{command,exitcode}*", mode: 'copy'
+	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba/2kb/local_assembly/bedpe", pattern: "*{bedpe,txt}", mode: 'copy'
+	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba/2kb/local_assembly/bedpe", pattern: "*{command,exitcode}*", mode: 'copy'
 	    			       	     
 	label "bp_homology_python"
 
@@ -442,6 +574,7 @@ process vcf_to_bedpe {
     	python3 ${py_dir}/vcf_to_csv_and_bedpe_ss.py ${svaba_unfiltered_germline_sv_vcf} "${aliquot_barcode}" &&\
 	 	
 	 	ls -al -R ./ >> env.txt
+	
     	"""
 }
 
@@ -450,8 +583,8 @@ process post_aabpss {
     
 	tag "${aliquot_barcode}"
 
-	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba_ss/2kb/local_assembly/post_aabpss", pattern: "*.{csv,txt}", mode: 'copy'
-	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba_ss/2kb/local_assembly/post_aabpss", pattern: "*{command,exitcode}*", mode: 'copy'
+	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba/2kb/local_assembly/post_aabpss", pattern: "*.{csv,txt}", mode: 'copy'
+	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba/2kb/local_assembly/post_aabpss", pattern: "*{command,exitcode}*", mode: 'copy'
 	
 	label "bp_homology_python"
 	    			       	     
@@ -471,7 +604,37 @@ process post_aabpss {
     	gunzip -c ${bps_txt} > *.bps.txt
     	python3 ${py_dir}/post_aa_bp_ss.py ${aliquot_barcode} ${svaba_somatic_bedpe} *.bps.txt ${matched_svaba_annotated_aa}  ${params.gr4_paths[study]} ${params.amp_paths[study]} \
 	 	
-	 	  ls -al -R ./ >> env.txt
+	 	ls -al -R ./ >> env.txt
+	
+    	"""
+}
+
+process post_aabpss_ms {
+    
+	tag "${aliquot_barcode}"
+
+	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba/2kb/local_assembly/post_aabpss", pattern: "*.{csv,txt}", mode: 'copy'
+	publishDir "${params.scratch_dir}/results/${params.workflow_name}/${params.aa_workflow}/${params.genome}/${study}/${repository}/${project}/${aliquot_barcode}/svaba/2kb/local_assembly/post_aabpss", pattern: "*{command,exitcode}*", mode: 'copy'
+	
+	label "bp_homology_python"
+	    			       	     
+	input:
+		tuple val(aliquot_barcode), val(study), val(project), val(repository), val(tm_object_id), val(nm_object_id), path(matched_svaba_annotated_aa), path(svaba_somatic_bedpe), path(bps_txt)
+		file(py_dir)
+	
+	when:
+		svaba_somatic_bedpe.exists() && svaba_somatic_bedpe.size() > 0
+	
+	output:
+		tuple val(aliquot_barcode), path("*.csv"), path("env.txt"), path("*{command,exitcode}*",hidden:true)
+
+    script:
+    	
+    	"""
+    	gunzip -c ${bps_txt} > *.bps.txt
+    	python3 ${py_dir}/post_aa_bp_ms.py ${aliquot_barcode} ${svaba_somatic_bedpe} *.bps.txt ${matched_svaba_annotated_aa}  ${params.gr4_ms_paths[study]} ${params.amp_ms_paths[study]} \
+	 	
+	 	ls -al -R ./ >> env.txt
 	
     	"""
 }
@@ -492,7 +655,7 @@ process index_bam {
     samtools index ${tm_bam}
     samtools index ${nm_bam}
 
- 	  ls -al -R ./ >> env.txt
+ 	ls -al -R ./ >> env.txt
 
     """
 }
@@ -506,6 +669,107 @@ Define functions
 =================================================================
 =================================================================
 */
+// load aaSuite results 
+
+/*
+def extract_key(manifest_path) {
+    def parts = manifest_path.split('/')
+    def filename = parts[-1]
+    def key = filename.split('_BNDregion')[0]
+    return key
+}
+def get_aaSuite_output_file(key) {
+    if (key == 'tcga_somatic_ss') {
+        return params.tcga_aa_somatic_ss_file
+    } else if (key == 'tcga_somatic_ms') {
+        return params.tcga_aa_somatic_ms_file
+    } else if (key == 'pcawg_somatic_ss') {
+        return params.pcawg_aa_somatic_ss_file
+    } else {
+        throw new Exception("Unknown key: ${key}")
+    }
+}
+
+def get_aaSuite_result_ch(manifest_file) {
+    def key = extract_key(manifest_file)
+    def aaSuite_output_file = get_aaSuite_output_file(key)
+
+    def samples_ch = Channel
+        .fromPath(aaSuite_output_file)
+        .splitCsv(header: true)
+        .map{ row-> tuple(  row.aa_barcode, 
+        	                row.cp_output_dir,
+        	                row.tm_object_id,
+        	                row.nm_object_id)}
+        .map{      aliquot, aa_files, tm_object_id, nm_object_id ->
+            def aa_output_f = file(aa_files).exists() ? file(aa_files) : "File not found"
+
+            return[ aliquot, tm_object_id, nm_object_id, aa_output_f ]
+        }
+    return samples_ch
+}
+
+
+
+def make_samples ( ch_aaSuite_result, dna_legacy_file_sheet  ) {
+    ch_samples = Channel
+        .fromPath(dna_legacy_file_sheet)
+        .splitCsv(header:true)
+        .map{ row-> tuple(  row.aa_barcode,
+                            row.study,
+                            row.project,
+                            row.tm_object_id,
+                            row.tm_file_path,
+                            row.nm_object_id,
+                            row.nm_file_path,
+                            row.BNDregion_bed_file_path,
+                            row.tm_bai_file_path,
+                            row.nm_bai_file_path,
+                            row.action ) }
+        .map{         aliquot, study, project, tm_object_id, tm_bam_path, nm_object_id, nm_bam_path, bed_path, tm_bai_path, nm_bai_path, action ->
+
+        return       [aliquot, tm_object_id, nm_object_id, study, project, tm_bam_path, tm_bai_path, nm_bam_path, nm_bai_path, bed_path, action ] }
+        .unique()
+
+    ch_samples
+        .combine( ch_aaSuite_result, by: [0,1,2] )
+        .map{           aliquot, tm_object_id, nm_object_id, aa_files, study, project, tm_bam_path, tm_bai_path, nm_bam_path, nm_bai_path, bed_path, action  ->
+            def tm_bam = file(tm_bam_path).exists() ? file(tm_bam_path) : "File not found"
+            def tm_bai = file(tm_bai_path).exists() ? file(tm_bai_path) : "File not found"
+            def nm_bam = file(nm_bam_path).exists() ? file(nm_bam_path) : "File not found"
+            def nm_bai = file(nm_bai_path).exists() ? file(nm_bai_path) : "File not found"
+                return [aliquot, tm_object_id, nm_object_id, aa_files, study, project, tm_bam, tm_bai, nm_bam, nm_bai, bed_path, action ]}
+        .filter{        aliquot, tm_object_id, nm_object_id, aa_files, study, project, tm_bam, tm_bai, nm_bam, nm_bai, bed_path, action ->
+			        action == "run" }
+		.map{           aliquot, tm_object_id, nm_object_id, aa_files, study, project, tm_bam, tm_bai, nm_bam, nm_bai, bed_path, action ->
+				return [aliquot, tm_object_id, nm_object_id, aa_files, study, project, tm_bam, tm_bai, nm_bam, nm_bai, bed_path ]}
+}
+
+
+def ch_pair_to_object(ch_pair_bams) {
+    def ch_tumor_bams = ch_pair_bams
+        .map { aliquot, tm_object_id, nm_object_id, aa_files, study, project, tm_bam, tm_bai, nm_bam, nm_bai, bed_path ->
+            def tm_or_nm = 'tumor'
+            return [ aliquot, study, project, aa_files, tm_object_id, tm_bam, tm_bai, bed_path, tm_or_nm ]
+        }
+        .unique()
+
+    def ch_normal_bams = ch_pair_bams
+        .map { aliquot, tm_object_id, nm_object_id, aa_files, study, project, tm_bam, tm_bai, nm_bam, nm_bai, bed_path ->
+            def tm_or_nm = 'normal'
+            return [ aliquot, study, project, aa_files, nm_object_id, nm_bam, nm_bai, bed_path, tm_or_nm  ]
+        }
+        .unique()
+
+    def merged_channel = ch_tumor_bams.concat(ch_normal_bams)
+
+    return merged_channel
+        .map{        aliquot, study, project, aa_files, object_id, bam_path, bai_path, bed_path, tm_or_nm ->
+            return [ aliquot, study, project, aa_files, object_id, bam_path, bai_path, bed_path, tm_or_nm ]}
+        .unique()
+}
+*/
+
 def make_samples ( dna_legacy_file_sheet  ) {
     ch_samples = Channel
         .fromPath(dna_legacy_file_sheet)
@@ -524,11 +788,11 @@ def make_samples ( dna_legacy_file_sheet  ) {
                             row.cp_output_dir,
                             row.action ) }
         .map{          aliquot, study, project, repository, tm_object_id, tm_bam_path, tm_bai_path, nm_object_id, nm_bam_path, nm_bai_path, bed_path, aa_files, action ->
-            def tm_bam = file(tm_bam_path).exists() ? file(tm_bam_path): "File not found"
-            def tm_bai = file(tm_bai_path).exists() ? file(tm_bai_path): "File not found"
-            def nm_bam = file(nm_bam_path).exists() ? file(nm_bam_path): "File not found"
-            def nm_bai = file(nm_bai_path).exists() ? file(nm_bai_path): "File not found"
-            def aa_file = file(aa_files).exists() ? file(aa_files): "File not found"
+            def tm_bam = file(tm_bam_path).exists() ? file(tm_bam_path) : "File not found"
+            def tm_bai = file(tm_bai_path).exists() ? file(tm_bai_path) : "File not found"
+            def nm_bam = file(nm_bam_path).exists() ? file(nm_bam_path) : "File not found"
+            def nm_bai = file(nm_bai_path).exists() ? file(nm_bai_path) : "File not found"
+            def aa_file = file(aa_files).exists() ? file(aa_files) : "File not found"
 	        return     [aliquot, study, project, repository, tm_object_id, tm_bam, tm_bai, nm_object_id, nm_bam, nm_bai, bed_path, aa_file, action ] }
         .filter{        aliquot, study, project, repository, tm_object_id, tm_bam, tm_bai, nm_object_id, nm_bam, nm_bai, bed_path, aa_file, action ->
 			    action == "run" }
@@ -553,9 +817,9 @@ def make_samples_only_bam ( dna_legacy_file_sheet  ) {
                             row.cp_output_dir,
                             row.action ) }
         .map{          aliquot, study, project, repository, tm_object_id, tm_bam_path, nm_object_id, nm_bam_path, bed_path, aa_files, action ->
-            def tm_bam = file(tm_bam_path).exists() ? file(tm_bam_path): "File not found"
-            def nm_bam = file(nm_bam_path).exists() ? file(nm_bam_path): "File not found"
-            def aa_file = file(aa_files).exists() ? file(aa_files): "File not found"
+            def tm_bam = file(tm_bam_path).exists() ? file(tm_bam_path) : "File not found"
+            def nm_bam = file(nm_bam_path).exists() ? file(nm_bam_path) : "File not found"
+            def aa_file = file(aa_files).exists() ? file(aa_files) : "File not found"
 	        return     [aliquot, study, project, repository, tm_object_id, tm_bam, nm_object_id, nm_bam, bed_path, aa_file, action ] }
         .filter{        aliquot, study, project, repository, tm_object_id, tm_bam, nm_object_id, nm_bam, bed_path, aa_file, action ->
 			    action == "run" }

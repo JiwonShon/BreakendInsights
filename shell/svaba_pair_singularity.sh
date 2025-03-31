@@ -66,30 +66,29 @@ singularity exec "$SINGULARITY_IMAGE" which samtools
 
 singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
     samtools view -H "$TM_BAM_FILE" > "$WORKDIR/bam/$(basename "$TM_BAM_FILE").header.txt" 
-
 singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
     samtools view -H "$NM_BAM_FILE" > "$WORKDIR/bam/$(basename "$NM_BAM_FILE").header.txt" 
 
-# # --- Step 2: Generate BAM Index ---
-# # echo "🔹 Generating BAM index..."
-# # singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
-# #     samtools index "$BAM_FILE"
-
-# # --- Step 3: Run SvABA  ---
-# echo "🚀 Running SvABA including Amplicon interval region..."
+# --- Step 2: Generate BAM Index ---
+# echo "🔹 Generating BAM index..."
 # singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
-#     svaba run \
-#     -t "$TM_BAM_FILE" \
-#     -n "$NM_BAM_FILE" \
-#     -D "$svaba_dbsnp_vcf" \
-#     -a "$WORKDIR/${TM_OBJECT_ID}__${NM_OBJECT_ID}" \
-#     -G "$REFERENCE_FILE" \
-#     -k "$BED_FILE" && 
-#     ls -al -R ./ >> env.txt
+#     samtools index "$BAM_FILE"
 
-# # --- Step 4: Finalize ---
-# echo "0" > "$WORKDIR/finish_flag.txt"
-# ls -al -R "$WORKDIR" > "$WORKDIR/env.txt"
+# --- Step 3: Run SvABA  ---
+echo "🚀 Running SvABA including Amplicon interval region..."
+singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
+    svaba run \
+    -t "$TM_BAM_FILE" \
+    -n "$NM_BAM_FILE" \
+    -D "$svaba_dbsnp_vcf" \
+    -a "$WORKDIR/${TM_OBJECT_ID}__${NM_OBJECT_ID}" \
+    -G "$REFERENCE_FILE" \
+    -k "$BED_FILE" && 
+    ls -al -R ./ >> env.txt
+
+# --- Step 4: Finalize ---
+echo "0" > "$WORKDIR/finish_flag.txt"
+ls -al -R "$WORKDIR" > "$WORKDIR/env.txt"
 
 # --- Step 5: Compute execution time ---
 END_TIME=$SECONDS

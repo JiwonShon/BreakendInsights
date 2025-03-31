@@ -30,9 +30,9 @@ cd ..
 ```
 
 ### 3. Run the BAM slicing script
-Execute the script with **the absolute path of the TM and NM BAM file**:
+Execute the script with **the absolute path of the tumor and normal BAM files**:
 ```
-bash ./svaba_pair_singularity.sh /absolute/path/to/TM_BAM_file /absolute/path/to/NM_BAM_file
+bash ./svaba_pair_singularity.sh /absolute/path/to/TUMOR.bam /absolute/path/to/NORMAL.bam
 ``` 
 
 ### 4. Check the output

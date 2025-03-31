@@ -1,0 +1,56 @@
+Bootstrap: docker
+From: ubuntu:20.04
+
+%labels
+    Maintainer Ji-won
+
+%environment
+    export PATH="/opt/svaba/build:$PATH"
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+
+    # Install build dependencies
+    apt update && apt install -y \
+        autoconf \
+        automake \
+        make \
+        gcc \
+        g++ \
+        git \
+        perl \
+        zlib1g-dev \
+        libbz2-dev \
+        liblzma-dev \
+        libcurl4-gnutls-dev \
+        libssl-dev \
+        cmake \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Install htslib
+    cd /opt && \
+    git clone --recursive https://github.com/samtools/htslib.git && \
+    cd htslib && \
+    autoheader && \
+    autoconf && \
+    ./configure && \
+    make && make install
+
+    # Refresh linker cache
+    ldconfig
+
+    # Install samtools (latest from GitHub)
+    cd /opt && \
+    git clone https://github.com/samtools/samtools.git && \
+    cd samtools && \
+    make && make install
+
+    # Clone and build SvABA
+    cd /opt && \
+    git clone --recursive https://github.com/walaj/svaba.git && \
+    cd svaba && mkdir build && cd build && \
+    cmake .. -DHTSLIB_DIR=/usr/local && \
+    make
+
+%runscript
+    exec svaba "$@"

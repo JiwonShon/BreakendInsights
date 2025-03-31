@@ -18,9 +18,9 @@ BED_FILE="./glass_ms_bed/${PATIENT_ID}_ms_BNDregion.bed"
 # Change the following paths according to your setup
 # =================
 SINGULARITY_IMAGE="./singularity_def/svaba_v1.2.0.sif"             
-REFERENCE_FILE="/mnt/NAS/storage/references/GRCh37/human_g1k_v37_decoy.fasta"   
-svaba_dbsnp_vcf="/mnt/NAS/storage/references/GRCh37/dbsnp_138.b37.vcf"
-BIND_PATHS="$(pwd):$(pwd),${BAM_DIR}:${BAM_DIR},/mnt/NAS/storage/references/GRCh37:/mnt/NAS/storage/references/GRCh37"                                   
+REFERENCE_FILE="./reference/human_g1k_v37_decoy.fasta"   
+svaba_dbsnp_vcf="./reference/dbsnp_138.b37.vcf"
+BIND_PATHS="$(pwd):$(pwd),${BAM_DIR}:${BAM_DIR}"                                   
 
 # =================
 # Check files

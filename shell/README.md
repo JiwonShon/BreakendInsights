@@ -20,10 +20,10 @@ svaba_pair_singularity.sh
 ```
 
 ### 2. Build the Singularity image
-```
+
 Get into the ./singularity_def directory:
 & Run the following command to build the Singularity image
-
+```
 cd ./singularity_def
 singularity build --fakeroot svaba_v1.2.0.sif svaba_v1.2.0.def
 cd ..

@@ -33,8 +33,8 @@ cd ..
 Execute the script with **the absolute path of the tumor and normal BAM files**:
 ```
 bash ./svaba_pair_singularity.sh /absolute/path/to/TUMOR.bam /absolute/path/to/NORMAL.bam
-``` 
+`` 
 
 ### 4. Check the output
 The output files will be stored in the following directory:
-₩./results/SvABA/${PATIENT_ID}/${TM_OBJECT_ID}__${NM_OBJECT_ID}₩
+`./results/SvABA/${PATIENT_ID}/${TM_OBJECT_ID}__${NM_OBJECT_ID}`

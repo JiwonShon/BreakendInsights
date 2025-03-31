@@ -1,9 +1,6 @@
 Bootstrap: docker
 From: ubuntu:20.04
 
-%labels
-    Maintainer Ji-won
-
 %environment
     export PATH="/opt/svaba/build:$PATH"
 
@@ -24,9 +21,12 @@ From: ubuntu:20.04
         liblzma-dev \
         libcurl4-gnutls-dev \
         libssl-dev \
+        samtools \
         cmake \
         && rm -rf /var/lib/apt/lists/*
-
+    
+    samtools --version
+    
     # Install htslib
     cd /opt && \
     git clone --recursive https://github.com/samtools/htslib.git && \
@@ -36,14 +36,9 @@ From: ubuntu:20.04
     ./configure && \
     make && make install
 
+    
     # Refresh linker cache
     ldconfig
-
-    # Install samtools (latest from GitHub)
-    cd /opt && \
-    git clone https://github.com/samtools/samtools.git && \
-    cd samtools && \
-    make && make install
 
     # Clone and build SvABA
     cd /opt && \
@@ -54,3 +49,8 @@ From: ubuntu:20.04
 
 %runscript
     exec svaba "$@"
+
+
+%labels
+    Author Jiwon
+    Version 1.2.0

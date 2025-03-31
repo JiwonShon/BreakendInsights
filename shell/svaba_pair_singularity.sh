@@ -69,7 +69,7 @@ singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
 singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
     samtools view -H "$NM_BAM_FILE" > "$WORKDIR/bam/$(basename "$NM_BAM_FILE").header.txt" 
 
-# --- Step 2: Generate BAM Index ---
+# --- Step 2: Generate BAM Index (if needed) ---
 # echo "🔹 Generating BAM index..."
 # singularity exec --bind "$BIND_PATHS" "$SINGULARITY_IMAGE" \
 #     samtools index "$BAM_FILE"

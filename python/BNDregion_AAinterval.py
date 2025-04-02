@@ -4,7 +4,7 @@ import os
 import argparse
 import pandas as pd
 
-def extract_intervals_to_bed(input_path, aa_barcode=None, band_width=1000, refbuild='hg19'):
+def extract_intervals_to_bed(input_path, aa_barcode=None, band_width=1000, refbuild='GRCh37'):
     """
     Extract intervals from cycle.txt files and safely expand them within chromosome bounds.
     
@@ -17,14 +17,23 @@ def extract_intervals_to_bed(input_path, aa_barcode=None, band_width=1000, refbu
     Returns:
         pandas.DataFrame: DataFrame of extracted and expanded intervals
     """
-    # Chromosome lengths for hg19
-    hg19_lengths = {
+    # Chromosome lengths for GRCh37 and GRCh38
+    GRCh37_lengths = {
         'chr1': 249250621, 'chr2': 243199373, 'chr3': 198022430, 'chr4': 191154276,
         'chr5': 180915260, 'chr6': 171115067, 'chr7': 159138663, 'chr8': 146364022,
         'chr9': 141213431, 'chr10': 135534747, 'chr11': 135006516, 'chr12': 133851895,
         'chr13': 115169878, 'chr14': 107349540, 'chr15': 102531392, 'chr16': 90354753,
         'chr17': 81195210, 'chr18': 78077248, 'chr19': 59128983, 'chr20': 63025520,
         'chr21': 48129895, 'chr22': 51304566, 'chrX': 155270560, 'chrY': 59373566
+    }
+    
+    GRCh38_lengths = {
+        'chr1': 248956422, 'chr2': 242193529, 'chr3': 198295559, 'chr4': 190214555,
+        'chr5': 181538259, 'chr6': 170805979, 'chr7': 159345973, 'chr8': 145138636,
+        'chr9': 138394717, 'chr10': 133797422, 'chr11': 135086622, 'chr12': 133275309,
+        'chr13': 114364328, 'chr14': 107043718, 'chr15': 101991189, 'chr16': 90338345,
+        'chr17': 83257441, 'chr18': 80373285, 'chr19': 58617616, 'chr20': 64444167,
+        'chr21': 46709983, 'chr22': 50818468, 'chrX': 156040895, 'chrY': 57227415
     }
     
     # Find all cycle.txt files
@@ -65,7 +74,7 @@ def extract_intervals_to_bed(input_path, aa_barcode=None, band_width=1000, refbu
                 end = int(parts[4])
                 
                 # Safely expand intervals within chromosome bounds
-                chr_length = hg19_lengths.get(chr, float('inf'))
+                chr_lengths = GRCh38_lengths if refbuild == 'GRCh38' else GRCh37_lengths
                 
                 # Ensure expanded start is not negative and does not exceed chromosome length
                 expanded_start = max(1, start - band_width)
@@ -106,8 +115,8 @@ def main():
                         help='Directory where output BED file will be written')
     parser.add_argument('--refbuild', 
                         type=str, 
-                        default='hg19', 
-                        choices=['hg19', 'hg38'], 
+                        default='GRCh37', 
+                        choices=['GRCh37', 'GRCh38'], 
                         help='Reference genome build')
     parser.add_argument('--band_width', 
                         type=int, 

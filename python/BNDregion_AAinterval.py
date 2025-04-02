@@ -75,6 +75,7 @@ def extract_intervals_to_bed(input_path, aa_barcode=None, band_width=1000, refbu
                 
                 # Safely expand intervals within chromosome bounds
                 chr_lengths = GRCh38_lengths if refbuild == 'GRCh38' else GRCh37_lengths
+                chr_length = chr_lengths.get(chr, float('inf'))
                 
                 # Ensure expanded start is not negative and does not exceed chromosome length
                 expanded_start = max(1, start - band_width)

@@ -1,5 +1,15 @@
-df['patient_barcode'] = df['file_name'].str.extract(r'^(.*)_amplicon')
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+import plotly.io as pio
 
+pio.renderers.default = 'browser'
+
+
+df = similarity_df.copy()
+patientID='patientid'
+
+df['patient_barcode'] = df['file_name'].str.extract(r'^(.*)_amplicon')
 df['aliquot_barcode1'] = df['Amp1'].str.extract(r'^(.*)_amplicon')
 df['aliquot_barcode2'] = df['Amp2'].str.extract(r'^(.*)_amplicon')
 df['tumor_stage1'] = df['aliquot_barcode1'].str.split('__').str[0].str[12:]
@@ -12,18 +22,10 @@ df[['amplicon2']] = df['Amp2'].str.extract(r'_(amplicon\d+)')
 df = df.merge(categories_df.rename(columns={'Amp': 'Amp1', 'CAT': 'CAT1'}), on='Amp1', how='left')
 df = df.merge(categories_df.rename(columns={'Amp': 'Amp2', 'CAT': 'CAT2'}), on='Amp2', how='left')
 
-patientID='patientid'
 test=df[df['patient_barcode']==patientID][['patient_barcode','tumor_stage1','tumor_stage2','amplicon1','amplicon2','CAT1','CAT2','SimilarityScore','SimScorePercentile']]
 
 df = test.copy()
 print(test.shape)
-
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-import plotly.io as pio
-
-pio.renderers.default = 'browser'
 
 # -------------------- 설정 --------------------
 stage_order = ['T', 'TII', 'TIII', 'TIV']

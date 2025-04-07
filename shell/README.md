@@ -29,11 +29,12 @@ singularity build --fakeroot svaba_v1.2.0.sif svaba_v1.2.0.def
 cd ..
 ```
 
-### 3. Run the BAM slicing script
+### 3. Run SvABA using the targeted local assembly script
 Execute the script with **the absolute path of the tumor and normal BAM files**:
 ```
 bash ./svaba_pair_singularity.sh /absolute/path/to/TUMOR.bam /absolute/path/to/NORMAL.bam
-``` 
+```
+Reference: https://github.com/walaj/svaba?tab=readme-ov-file#targeted-local-assembly
 
 ### 4. Check the output
 The output files will be stored in the following directory:  `./results/SvABA/${PATIENT_ID}/${TM_OBJECT_ID}__${NM_OBJECT_ID}`
